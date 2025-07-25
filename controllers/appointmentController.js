@@ -23,7 +23,7 @@ export const createAppointment = async (req, res) => {
 // Doctor accepts appointment
 export const acceptAppointment = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id);
+    const appointment = await Appointment.findById(req.params.id).populate('patient', 'name');
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
     appointment.status = "accepted";
@@ -41,7 +41,7 @@ export const rescheduleAppointment = async (req, res) => {
   try {
     const { newDate } = req.body;
 
-    const appointment = await Appointment.findById(req.params.id);
+    const appointment = await Appointment.findById(req.params.id).populate('patient', 'name');
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
     appointment.date = newDate;
@@ -60,7 +60,7 @@ export const completeAppointment = async (req, res) => {
   try {
     const { advice } = req.body;
 
-    const appointment = await Appointment.findById(req.params.id);
+    const appointment = await Appointment.findById(req.params.id).populate('patient', 'name');
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
     appointment.status = "completed";
@@ -74,15 +74,37 @@ export const completeAppointment = async (req, res) => {
   }
 };
 
+// Get all appointments for logged-in patient
 export const getPatientAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find({ patient: req.user.id })
-      .populate("doctor", "name email") // to show doctor details
-      .sort({ date: -1 }); // latest first
+      .populate("doctor", "name email specialization")
+      .sort({ date: -1 });
 
     res.json(appointments);
   } catch (err) {
     console.error("Fetch patient appointments error:", err);
     res.status(500).json({ error: "Failed to fetch appointments" });
+  }
+};
+
+// Delete appointment by patient
+export const deleteAppointment = async (req, res) => {
+  try {
+    const appointment = await Appointment.findOne({
+      _id: req.params.id,
+      patient: req.user.id,
+    });
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    await appointment.deleteOne();
+
+    res.json({ message: "Appointment deleted successfully" });
+  } catch (err) {
+    console.error("Delete appointment error:", err);
+    res.status(500).json({ error: "Failed to delete appointment" });
   }
 };

@@ -9,6 +9,12 @@ const userSchema = new mongoose.Schema({
     enum: ["patient", "doctor"],
     default: "patient",
   },
+  specialization: {
+    type: String,
+    required: function () {
+      return this.role === "doctor";
+    },
+  },
 });
 
 export default mongoose.model("User", userSchema);

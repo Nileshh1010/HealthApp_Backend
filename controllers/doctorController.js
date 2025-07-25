@@ -23,3 +23,13 @@ export const getPatientSymptoms = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const getAllDoctors = async (req, res) => {
+  try {
+    const doctors = await User.find({ role: "doctor" }).select("name _id email specialization");
+    res.json(doctors);
+  } catch (error) {
+    console.error("Fetch doctors error:", error);
+    res.status(500).json({ error: "Failed to fetch doctors" });
+  }
+};

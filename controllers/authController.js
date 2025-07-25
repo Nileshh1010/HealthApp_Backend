@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import generateToken from "../utils/generateToken.js";
 
 export const register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, specialization } = req.body; // added specialization
 
   try {
     const existingUser = await User.findOne({ email, role });
@@ -12,12 +12,20 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({
+
+    const userData = {
       name,
       email,
       password: hashedPassword,
       role,
-    });
+    };
+
+    // If registering as doctor, add specialization
+    if (role === "doctor") {
+      userData.specialization = specialization;
+    }
+
+    const user = await User.create(userData);
 
     const token = generateToken(user);
     res.json({ token, user });
